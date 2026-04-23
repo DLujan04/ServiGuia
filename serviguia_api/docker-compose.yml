@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────
+#  docker-compose.yml  –  ServiGuía API
+#  Nota: "version" omitido intencionalmente (deprecado en
+#  Docker Compose v2+, se detecta automáticamente)
+# ─────────────────────────────────────────────────────────────
+
+services:
+  serviguia:
+    build: .
+    ports:
+      - "8000:8000"       # puerto_tu_pc:puerto_contenedor
+    env_file:
+      - .env              # carga todas las variables de entorno del .env
+    volumes:
+      - ./data:/app/data  # sincroniza la carpeta de trabajadores
+    restart: unless-stopped

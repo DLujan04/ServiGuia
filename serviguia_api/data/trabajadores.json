@@ -1,0 +1,185 @@
+[
+  {
+    "id": "t001",
+    "nombre": "Carlos Mendoza",
+    "categorias": [
+      "plomeria",
+      "plomeria.fugas_menores",
+      "plomeria.tinacos"
+    ],
+    "calificacion_global": 4.9,
+    "insignias": [
+      "experiencia_top",
+      "siempre_puntual",
+      "certificado"
+    ],
+    "disponible": true,
+    "precio_desde": 300,
+    "precio_hasta": 800,
+    "total_reviews": 32
+  },
+  {
+    "id": "t002",
+    "nombre": "Jesús Medina",
+    "categorias": [
+      "plomeria",
+      "plomeria.fugas_menores",
+      "plomeria.lavadora_secadora",
+      "plomeria.hidroneumaticos"
+    ],
+    "calificacion_global": 4.6,
+    "insignias": [
+      "siempre_puntual"
+    ],
+    "disponible": true,
+    "precio_desde": 250,
+    "precio_hasta": 700,
+    "total_reviews": 18
+  },
+  {
+    "id": "t003",
+    "nombre": "Miguel Angel Torres",
+    "categorias": [
+      "electricidad"
+    ],
+    "calificacion_global": 4.7,
+    "insignias": [
+      "experiencia_top",
+      "certificado"
+    ],
+    "disponible": true,
+    "precio_desde": 400,
+    "precio_hasta": 1200,
+    "total_reviews": 41
+  },
+  {
+    "id": "t004",
+    "nombre": "Roberto Gámez",
+    "categorias": [
+      "carpinteria"
+    ],
+    "calificacion_global": 4.5,
+    "insignias": [
+      "trabajador_formal"
+    ],
+    "disponible": true,
+    "precio_desde": 350,
+    "precio_hasta": 1500,
+    "total_reviews": 22
+  },
+  {
+    "id": "t005",
+    "nombre": "Ernesto Valenzuela",
+    "categorias": [
+      "clima",
+      "clima.instalacion_ac",
+      "clima.reparacion_ac"
+    ],
+    "calificacion_global": 4.8,
+    "insignias": [
+      "experiencia_top",
+      "siempre_puntual",
+      "trabajador_formal"
+    ],
+    "disponible": true,
+    "precio_desde": 500,
+    "precio_hasta": 2000,
+    "total_reviews": 27
+  },
+  {
+    "id": "t006",
+    "nombre": "Óscar Duarte",
+    "categorias": [
+      "clima",
+      "clima.reparacion_ac",
+      "clima.reparacion_abanicos",
+      "clima.ducteros"
+    ],
+    "calificacion_global": 4.4,
+    "insignias": [
+      "certificado"
+    ],
+    "disponible": true,
+    "precio_desde": 400,
+    "precio_hasta": 1800,
+    "total_reviews": 15
+  },
+  {
+    "id": "t007",
+    "nombre": "Armando Soto",
+    "categorias": [
+      "construccion",
+      "construccion.impermeabilizacion",
+      "construccion.albanileria"
+    ],
+    "calificacion_global": 4.6,
+    "insignias": [
+      "experiencia_top",
+      "trabajador_formal"
+    ],
+    "disponible": true,
+    "precio_desde": 600,
+    "precio_hasta": 5000,
+    "total_reviews": 34
+  },
+  {
+    "id": "t008",
+    "nombre": "Patricia Leyva",
+    "categorias": [
+      "limpieza",
+      "limpieza.alfombras",
+      "limpieza.colchones",
+      "limpieza.salas",
+      "fumigacion"
+    ],
+    "calificacion_global": 4.9,
+    "insignias": [
+      "experiencia_top",
+      "siempre_puntual",
+      "certificado"
+    ],
+    "disponible": true,
+    "precio_desde": 200,
+    "precio_hasta": 600,
+    "total_reviews": 56
+  },
+  {
+    "id": "t009",
+    "nombre": "Fernando Acosta",
+    "categorias": [
+      "pintura",
+      "seguridad",
+      "seguridad.alarmas"
+    ],
+    "calificacion_global": 4.3,
+    "insignias": [
+      "trabajador_formal"
+    ],
+    "disponible": false,
+    "precio_desde": 300,
+    "precio_hasta": 2500,
+    "total_reviews": 12
+  },
+  {
+    "id": "t010",
+    "nombre": "Luisa Grijalva",
+    "categorias": [
+      "reparaciones",
+      "reparaciones.refrigeradores",
+      "reparaciones.lavadoras",
+      "reparaciones.estufas",
+      "computo",
+      "computo.soporte"
+    ],
+    "calificacion_global": 4.7,
+    "insignias": [
+      "experiencia_top",
+      "certificado",
+      "trabajador_formal"
+    ],
+    "disponible": true,
+    "precio_desde": 250,
+    "precio_hasta": 900,
+    "total_reviews": 38
+  }
+]

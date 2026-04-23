@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ServiGuía – Chat de Diagnóstico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset y variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f1117;
+      --surface:    #1a1d27;
+      --surface2:   #232635;
+      --border:     #2e3248;
+      --accent:     #6c63ff;
+      --accent-glow:#6c63ff44;
+      --text:       #e8eaf6;
+      --muted:      #8b90b0;
+      --critico:    #ff4d6d;
+      --moderado:   #ffb347;
+      --normal:     #43e97b;
+      --bubble-user:#6c63ff;
+      --bubble-bot: #232635;
+      --radius:     14px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    header h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+    header p  { font-size: 12px; color: var(--muted); }
+    .badge-mock {
+      margin-left: auto;
+      background: #2e3248;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── Zona de mensajes ── */
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    #chat::-webkit-scrollbar { width: 4px; }
+    #chat::-webkit-scrollbar-track { background: transparent; }
+    #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Burbujas ── */
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      animation: fadeUp 0.3s ease;
+    }
+    .msg-row.user { flex-direction: row-reverse; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .avatar.bot  { background: var(--surface2); border: 1px solid var(--border); }
+    .avatar.user { background: var(--accent);   box-shadow: 0 0 10px var(--accent-glow); }
+
+    .bubble {
+      max-width: min(480px, 80vw);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .msg-row.user  .bubble { background: var(--bubble-user); border-bottom-right-radius: 4px; }
+    .msg-row.bot   .bubble { background: var(--bubble-bot);  border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+
+    /* ── Tarjeta de diagnóstico ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      max-width: min(480px, 80vw);
+      animation: fadeUp 0.3s ease;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      font-weight: 600; font-size: 13px;
+    }
+    .urgencia-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+    .urgencia-CRITICO  { background: #ff4d6d22; color: var(--critico);  border: 1px solid var(--critico); }
+    .urgencia-MODERADO { background: #ffb34722; color: var(--moderado); border: 1px solid var(--moderado); }
+    .urgencia-NORMAL   { background: #43e97b22; color: var(--normal);   border: 1px solid var(--normal); }
+
+    .card-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    .field-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .8px;
+      margin-bottom: 2px;
+    }
+    .field-value { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+    .accion-box {
+      background: #ff4d6d11;
+      border: 1px solid #ff4d6d44;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .accion-box .field-label { color: var(--critico); }
+
+    .pregunta-box {
+      background: #6c63ff11;
+      border: 1px solid #6c63ff44;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .proveedores-list {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .proveedor-chip {
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all .18s;
+      font-family: inherit;
+    }
+    .proveedor-chip:hover {
+      background: var(--accent);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .emergencia-banner {
+      background: #ff4d6d;
+      color: white;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px;
+      letter-spacing: .3px;
+    }
+
+    /* ── Modal proveedor ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #00000088;
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      width: min(380px, 92vw);
+      position: relative;
+      box-shadow: 0 24px 60px #0009;
+      animation: fadeUp .25s ease;
+    }
+    #modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 16px;
+      width: 30px; height: 30px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .18s;
+    }
+    #modal-close:hover { color: var(--text); border-color: var(--accent); }
+    .modal-avatar {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+    .modal-name {
+      font-size: 18px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .modal-id {
+      font-size: 11px; color: var(--muted);
+      font-family: monospace;
+      margin-bottom: 16px;
+    }
+    .modal-stars {
+      color: #fbbf24;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .modal-reviews {
+      font-size: 11px; color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .modal-section-label {
+      font-size: 10px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .8px; margin-bottom: 6px;
+    }
+    .modal-cats {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      margin-bottom: 14px;
+    }
+    .modal-cat-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: monospace;
+      color: var(--text);
+    }
+    .modal-badges {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      margin-bottom: 18px;
+    }
+    .modal-badge {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-experiencia_top   { background:#6c63ff22; color:#a78bfa; border:1px solid #6c63ff55; }
+    .badge-certificado       { background:#43e97b22; color:#43e97b; border:1px solid #43e97b55; }
+    .badge-siempre_puntual   { background:#fbbf2422; color:#fbbf24; border:1px solid #fbbf2455; }
+    .badge-trabajador_formal { background:#60a5fa22; color:#60a5fa; border:1px solid #60a5fa55; }
+    .modal-precio {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-precio .label { font-size: 11px; color: var(--muted); }
+    .modal-precio .valor {
+      font-size: 16px; font-weight: 700;
+      color: var(--normal);
+    }
+    #modal-loading {
+      text-align: center; padding: 20px;
+      color: var(--muted); font-size: 13px;
+    }
+
+    /* ── Casos de prueba rápidos ── */
+    .casos-rapidos {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .casos-rapidos p {
+      font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 500;
+    }
+    .casos-grid {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .caso-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+    }
+    .caso-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* ── Input ── */
+    .input-area {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #inputMsg {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+      resize: none;
+      min-height: 42px;
+      max-height: 120px;
+    }
+    #inputMsg:focus { border-color: var(--accent); }
+    #inputMsg::placeholder { color: var(--muted); }
+
+    #btnSend {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      transition: all .2s;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    #btnSend:hover  { transform: scale(1.05); }
+    #btnSend:active { transform: scale(.97); }
+    #btnSend:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Typing indicator ── */
+    .typing { display: flex; align-items: center; gap: 4px; padding: 8px 4px; }
+    .typing span {
+      width: 7px; height: 7px;
+      background: var(--muted);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%           { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Modal Proveedor ── -->
+<div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-nombre">
+  <div id="modal-box">
+    <button id="modal-close" onclick="cerrarModal()" title="Cerrar">✕</button>
+    <div id="modal-loading">⏳ Cargando datos…</div>
+    <div id="modal-content" style="display:none">
+      <div class="modal-avatar">👷</div>
+      <div class="modal-name" id="modal-nombre"></div>
+      <div class="modal-id" id="modal-id-label"></div>
+      <div class="modal-stars" id="modal-stars"></div>
+      <div class="modal-reviews" id="modal-reviews"></div>
+      <div class="modal-section-label">Especialidades</div>
+      <div class="modal-cats" id="modal-cats"></div>
+      <div class="modal-section-label">Insignias</div>
+      <div class="modal-badges" id="modal-badges"></div>
+      <div class="modal-section-label">Rango de precio</div>
+      <div class="modal-precio">
+        <span class="label">Servicio desde</span>
+        <span class="valor" id="modal-precio"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">🔧</div>
+  <div>
+    <h1>ServiGuía</h1>
+    <p>Diagnóstico inteligente del hogar · ServiApp Hermosillo</p>
+  </div>
+  <span class="badge-mock">🤖 Modo Mock</span>
+</header>
+
+<!-- ── Chat ── -->
+<div id="chat">
+  <!-- Mensaje bienvenida -->
+  <div class="msg-row bot">
+    <div class="avatar bot">🔧</div>
+    <div class="bubble">
+      ¡Hola! Soy <strong>ServiGuía</strong>. Cuéntame qué problema tienes en tu casa y te ayudaré a identificarlo y encontrar al profesional correcto. 😊
+    </div>
+  </div>
+</div>
+
+<!-- ── Casos rápidos de prueba ── -->
+<div class="casos-rapidos">
+  <p>🧪 CASOS DE PRUEBA RÁPIDOS — haz clic para probar:</p>
+  <div class="casos-grid" id="casosBtns"></div>
+</div>
+
+<!-- ── Input ── -->
+<div class="input-area">
+  <textarea id="inputMsg" placeholder="Describe el problema en tu casa..." rows="1"></textarea>
+  <button id="btnSend" title="Enviar">➤</button>
+</div>
+
+<script>
+  // ── Configuración ──────────────────────────────────────────
+  const API_URL = '/api/diagnostico';
+
+  // 8 casos de prueba del documento
+  const CASOS = [
+    { id: 'C-01', texto: 'Mi casa huele mucho a gas' },
+    { id: 'C-02', texto: 'Hay chispas en el contacto de la cocina' },
+    { id: 'C-03', texto: 'Tengo una gotera en el techo cuando llueve' },
+    { id: 'C-04', texto: 'El aire acondicionado ya no enfría' },
+    { id: 'C-05', texto: 'Se me fue la luz en dos cuartos nada más' },
+    { id: 'C-06', texto: 'Algo se descompuso en el baño' },
+    { id: 'C-07', texto: 'Mi refrigerador ya no enfría bien' },
+    { id: 'C-08', texto: 'Hay agua saliendo por el fregadero' },
+  ];
+
+  // ── Render casos de prueba ────────────────────────────────
+  const casosBtns = document.getElementById('casosBtns');
+  CASOS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'caso-btn';
+    btn.textContent = `${c.id}: ${c.texto.substring(0, 30)}…`;
+    btn.title = c.texto;
+    btn.addEventListener('click', () => enviarMensaje(c.texto));
+    casosBtns.appendChild(btn);
+  });
+
+  // ── Helpers de UI ─────────────────────────────────────────
+  const chat     = document.getElementById('chat');
+  const inputMsg = document.getElementById('inputMsg');
+  const btnSend  = document.getElementById('btnSend');
+
+  function scrollDown() {
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function addMsg(rol, html) {
+    const row = document.createElement('div');
+    row.className = `msg-row ${rol}`;
+    row.innerHTML = `
+      <div class="avatar ${rol}">${rol === 'user' ? '👤' : '🔧'}</div>
+      <div class="bubble">${html}</div>
+    `;
+    chat.appendChild(row);
+    scrollDown();
+    return row;
+  }
+
+  function addTyping() {
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.id = 'typing-indicator';
+    row.innerHTML = `
+      <div class="avatar bot">🔧</div>
+      <div class="bubble" style="padding:10px 16px">
+        <div class="typing"><span></span><span></span><span></span></div>
+      </div>
+    `;
+    chat.appendChild(row);
+    scrollDown();
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing-indicator');
+    if (t) t.remove();
+  }
+
+  // ── Renderizar tarjeta de respuesta ──────────────────────
+  function renderCard(data) {
+    const urgNorm = data.nivel_urgencia
+      .replace('Í','I').replace('É','E')  // normalizar acentos para CSS class
+      .toUpperCase()
+      .replace('CRÍTICO','CRITICO')
+      .replace('MODERADO','MODERADO');
+
+    const cssUrgencia = data.nivel_urgencia.includes('TICO')
+      ? 'CRITICO'
+      : data.nivel_urgencia.includes('DERADO')
+        ? 'MODERADO'
+        : 'NORMAL';
+
+    let html = `<div class="card">`;
+
+    // Banner emergencia
+    if (data.es_emergencia && data.numero_emergencia) {
+      html += `<div class="emergencia-banner">🚨 EMERGENCIA — LLAMA AL ${data.numero_emergencia}</div>`;
+    }
+
+    // Header con urgencia
+    html += `
+      <div class="card-header">
+        <span>Diagnóstico</span>
+        <span class="urgencia-badge urgencia-${cssUrgencia}">${data.nivel_urgencia}</span>
+      </div>
+      <div class="card-body">
+    `;
+
+    // Acción inmediata
+    if (data.accion_inmediata) {
+      html += `
+        <div class="accion-box">
+          <p class="field-label">⚠️ Acción inmediata</p>
+          <p class="field-value">${data.accion_inmediata}</p>
+        </div>
+      `;
+    }
+
+    // Resumen
+    html += `
+      <div>
+        <p class="field-label">Diagnóstico</p>
+        <p class="field-value">${data.resumen_diagnostico}</p>
+      </div>
+    `;
+
+    // Categoría
+    if (data.categoria_detectada) {
+      html += `
+        <div>
+          <p class="field-label">Categoría detectada</p>
+          <p class="field-value" style="font-family:monospace;background:var(--surface2);
+             display:inline-block;padding:3px 8px;border-radius:5px;font-size:12px;">
+            ${data.categoria_detectada}
+          </p>
+        </div>
+      `;
+    }
+
+    // Pregunta de seguimiento
+    if (data.pregunta_seguimiento) {
+      html += `
+        <div class="pregunta-box">
+          <p class="field-label">💬 Necesito más info</p>
+          <p class="field-value">${data.pregunta_seguimiento}</p>
+        </div>
+      `;
+    }
+
+    // Proveedores
+    if (data.proveedores_sugeridos && data.proveedores_sugeridos.length > 0) {
+      const chips = data.proveedores_sugeridos
+        .map(id => `<button class="proveedor-chip" onclick="abrirProveedor('${id}')" title="Ver perfil de ${id}">🔍 ${id}</button>`)
+        .join('');
+      html += `
+        <div>
+          <p class="field-label">Proveedores sugeridos <small style="color:var(--muted);font-weight:400">(haz clic para ver perfil)</small></p>
+          <div class="proveedores-list">${chips}</div>
+        </div>
+      `;
+    }
+
+    html += `</div></div>`;  // cierra card-body y card
+
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.innerHTML = `<div class="avatar bot">🔧</div>${html}`;
+    chat.appendChild(row);
+    scrollDown();
+  }
+
+  // ── Modal de proveedor ──────────────────────────────────
+  const overlay    = document.getElementById('modal-overlay');
+  const modalBox   = document.getElementById('modal-box');
+  const modalLoad  = document.getElementById('modal-loading');
+  const modalCont  = document.getElementById('modal-content');
+
+  function cerrarModal() {
+    overlay.classList.remove('open');
+  }
+
+  // Cerrar con Escape o clic fuera
+  overlay.addEventListener('click', e => { if (e.target === overlay) cerrarModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+  const BADGE_LABEL = {
+    'experiencia_top':   '⭐ Experiencia Top',
+    'certificado':       '✅ Certificado',
+    'siempre_puntual':   '⏰ Siempre Puntual',
+    'trabajador_formal': '🏢 Trabajador Formal',
+  };
+
+  function estrellasHtml(cal) {
+    const llenas  = Math.floor(cal);
+    const media   = cal - llenas >= 0.5;
+    const vacias  = 5 - llenas - (media ? 1 : 0);
+    return '★'.repeat(llenas) + (media ? '½' : '') + '☆'.repeat(vacias) + ` ${cal.toFixed(1)}`;
+  }
+
+  async function abrirProveedor(id) {
+    // Mostrar modal con loading
+    modalLoad.style.display = 'block';
+    modalCont.style.display = 'none';
+    overlay.classList.add('open');
+
+    try {
+      const res = await fetch(`/api/trabajador/${id}`);
+      if (!res.ok) throw new Error(await res.text());
+      const t = await res.json();
+
+      // Rellenar datos
+      document.getElementById('modal-nombre').textContent    = t.nombre;
+      document.getElementById('modal-id-label').textContent  = `ID: ${t.id}`;
+      document.getElementById('modal-stars').innerHTML       = estrellasHtml(t.calificacion_global);
+      document.getElementById('modal-reviews').textContent   = `${t.total_reviews} reseñas · ${t.disponible ? '🟢 Disponible' : '🔴 No disponible'}`;
+      document.getElementById('modal-precio').textContent    = `$${t.precio_desde} – $${t.precio_hasta} MXN`;
+
+      // Categorías
+      const catsEl = document.getElementById('modal-cats');
+      catsEl.innerHTML = t.categorias
+        .map(c => `<span class="modal-cat-tag">${c}</span>`)
+        .join('');
+
+      // Insignias
+      const badgesEl = document.getElementById('modal-badges');
+      if (t.insignias.length > 0) {
+        badgesEl.innerHTML = t.insignias
+          .map(b => `<span class="modal-badge badge-${b}">${BADGE_LABEL[b] || b}</span>`)
+          .join('');
+      } else {
+        badgesEl.innerHTML = '<span style="color:var(--muted);font-size:12px">Sin insignias</span>';
+      }
+
+      modalLoad.style.display = 'none';
+      modalCont.style.display = 'block';
+
+    } catch (err) {
+      modalLoad.innerHTML = `❌ No se pudieron cargar los datos del proveedor <strong>${id}</strong>.`;
+    }
+  }
+
+  // ── Enviar mensaje ────────────────────────────────────────
+  async function enviarMensaje(texto) {
+    const msg = texto.trim();
+    if (!msg) return;
+
+    // Burbuja del usuario
+    addMsg('user', msg);
+    inputMsg.value = '';
+    inputMsg.style.height = 'auto';
+    btnSend.disabled = true;
+
+    // Indicador de carga
+    addTyping();
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descripcion: msg }),
+      });
+
+      removeTyping();
+
+      if (!res.ok) {
+        const err = await res.json();
+        addMsg('bot', `❌ Error del servidor: ${JSON.stringify(err.detail)}`);
+        return;
+      }
+
+      const data = await res.json();
+      renderCard(data);
+
+    } catch (e) {
+      removeTyping();
+      addMsg('bot', `❌ No se pudo conectar con la API.<br>
+        <small style="color:var(--muted)">¿Está corriendo <code>python main.py</code>?</small>`);
+    } finally {
+      btnSend.disabled = false;
+      inputMsg.focus();
+    }
+  }
+
+  // ── Eventos ────────────────────────────────────────────────
+  btnSend.addEventListener('click', () => enviarMensaje(inputMsg.value));
+
+  inputMsg.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      enviarMensaje(inputMsg.value);
+    }
+  });
+
+  // auto-resize textarea
+  inputMsg.addEventListener('input', () => {
+    inputMsg.style.height = 'auto';
+    inputMsg.style.height = inputMsg.scrollHeight + 'px';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# ────────────────────────────────────────────────
+#  requirements.txt  –  Dependencias de ServiGuía API
+# ────────────────────────────────────────────────
+
+# Servidor web y framework API
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+
+# Validación de datos
+pydantic==2.11.2
+
+# Variables de entorno desde archivo .env
+python-dotenv==1.1.0
+
+# Cliente oficial de OpenAI (para cuando se active el LLM real)
+openai==1.75.0
+
+# Soporte para multipart/form-data (envío de imágenes)
+python-multipart==0.0.20

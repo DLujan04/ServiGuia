@@ -1,0 +1,436 @@
+{
+  "info": {
+    "name": "ServiGuía API",
+    "description": "Colección de pruebas para el módulo ServiGuía.\n\n**Cómo usar:**\n1. Importa este archivo en Postman (File → Import)\n2. Asegúrate de que el servidor esté corriendo: `python main.py`\n3. Ejecuta cada request individualmente O usa Collection Runner para correr los 8 de un solo golpe.\n\n**URL base:** http://localhost:8000",
+    "_postman_id": "serviguia-collection-v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "URL base del servidor ServiGuía. Cambia el puerto si usas uno diferente."
+    }
+  ],
+  "item": [
+    {
+      "name": "🏥 Estado del servidor",
+      "item": [
+        {
+          "name": "GET / — Verificar servidor",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Verifica que el servidor esté activo. Debe responder {\"status\": \"ok\"}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Servidor activo', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Responde ok', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🚨 Casos CRÍTICOS (C-01 y C-02)",
+      "item": [
+        {
+          "name": "C-01 — Olor a gas (CRÍTICO)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Mi casa huele mucho a gas\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "**Caso crítico:** El sistema debe detectar emergencia de gas.\n\nEsperado:\n- nivel_urgencia: CRÍTICO\n- es_emergencia: true\n- proveedores_sugeridos: [] (vacío)\n- numero_emergencia: 911"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-01: Status 200', function() { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('C-01: Es emergencia', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.es_emergencia).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('C-01: Nivel CRITICO', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.nivel_urgencia).to.include('TICO');",
+                  "});",
+                  "",
+                  "pm.test('C-01: Sin proveedores', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.be.empty;",
+                  "});",
+                  "",
+                  "pm.test('C-01: Numero de emergencia 911', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.numero_emergencia).to.eql('911');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C-02 — Chispas en contacto (CRÍTICO)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Hay chispas en el contacto de la cocina\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "**Caso crítico eléctrico.**\n\nEsperado:\n- nivel_urgencia: CRÍTICO\n- es_emergencia: true\n- proveedores_sugeridos: []\n- numero_emergencia: 911"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-02: Es emergencia', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.es_emergencia).to.be.true;",
+                  "});",
+                  "pm.test('C-02: Sin proveedores', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.be.empty;",
+                  "});",
+                  "pm.test('C-02: Numero 911', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.numero_emergencia).to.eql('911');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🟡 Caso MODERADO (C-08)",
+      "item": [
+        {
+          "name": "C-08 — Agua por fregadero (MODERADO)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Hay agua saliendo por el fregadero\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "**Fuga activa — urgencia moderada.**\n\nEsperado:\n- nivel_urgencia: MODERADO\n- es_emergencia: false\n- accion_inmediata: (instrucción de cerrar llave)\n- proveedores_sugeridos: contiene t001 y t002"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-08: Nivel MODERADO', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.nivel_urgencia).to.include('MODERADO');",
+                  "});",
+                  "pm.test('C-08: No es emergencia', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.es_emergencia).to.be.false;",
+                  "});",
+                  "pm.test('C-08: Tiene accion_inmediata', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.accion_inmediata).to.not.be.null;",
+                  "});",
+                  "pm.test('C-08: Tiene proveedor t001', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t001');",
+                  "});",
+                  "pm.test('C-08: Tiene proveedor t002', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t002');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🟢 Casos NORMALES (C-03 al C-07)",
+      "item": [
+        {
+          "name": "C-03 — Gotera en el techo (NORMAL)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Tengo una gotera en el techo cuando llueve\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Esperado:\n- categoria_detectada: construccion.impermeabilizacion\n- proveedores_sugeridos: contiene t007"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-03: Nivel NORMAL', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.nivel_urgencia).to.include('NORMAL');",
+                  "});",
+                  "pm.test('C-03: Categoria impermeabilizacion', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.categoria_detectada).to.eql('construccion.impermeabilizacion');",
+                  "});",
+                  "pm.test('C-03: Proveedor t007', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t007');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C-04 — Aire acondicionado no enfría (NORMAL)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"El aire acondicionado ya no enfría\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Esperado:\n- categoria_detectada: clima.reparacion_ac\n- proveedores_sugeridos: contiene t005 y t006"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-04: Categoria clima.reparacion_ac', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.categoria_detectada).to.eql('clima.reparacion_ac');",
+                  "});",
+                  "pm.test('C-04: Proveedor t005', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t005');",
+                  "});",
+                  "pm.test('C-04: Proveedor t006', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t006');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C-05 — Se fue la luz en dos cuartos (NORMAL)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Se me fue la luz en dos cuartos nada más\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Esperado:\n- categoria_detectada: electricidad\n- proveedores_sugeridos: contiene t003"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-05: Categoria electricidad', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.categoria_detectada).to.eql('electricidad');",
+                  "});",
+                  "pm.test('C-05: Proveedor t003', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t003');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C-06 — Algo en el baño (AMBIGUO)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Algo se descompuso en el baño\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "**Caso ambiguo:** El sistema debe hacer una pregunta de seguimiento.\n\nEsperado:\n- pregunta_seguimiento: (no null)\n- proveedores_sugeridos: [] (espera más info)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-06: Tiene pregunta de seguimiento', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.pregunta_seguimiento).to.not.be.null;",
+                  "    pm.expect(json.pregunta_seguimiento.length).to.be.above(5);",
+                  "});",
+                  "pm.test('C-06: No es emergencia', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.es_emergencia).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C-07 — Refrigerador no enfría bien (NORMAL)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Mi refrigerador ya no enfría bien\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Esperado:\n- categoria_detectada: reparaciones.refrigeradores\n- proveedores_sugeridos: contiene t010"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('C-07: Categoria reparaciones.refrigeradores', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.categoria_detectada).to.eql('reparaciones.refrigeradores');",
+                  "});",
+                  "pm.test('C-07: Proveedor t010', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.proveedores_sugeridos).to.include('t010');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔬 Pruebas de validación del schema",
+      "item": [
+        {
+          "name": "Schema — Descripción vacía (debe dar error 422)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Verifica que el servidor rechaza descripciones vacías con error 422."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza descripcion vacia con 422', function() {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Schema — Sin campo descripcion (debe dar error 422)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/diagnostico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Verifica que el campo 'descripcion' es obligatorio."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza body sin descripcion con 422', function() {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
